@@ -28,11 +28,12 @@ pipeline {
 
         stage('3. Analyse SonarQube') {
             steps {
-                // Utilise le nom 'SonarQube' configuré dans Manage Jenkins > System
-                withSonarQubeEnv('SonarQube') {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     dir('backend') {
                         sh '''
                             mvn sonar:sonar \
+                              -Dsonar.host.url=http://localhost:9000 \
+                              -Dsonar.token=${SONAR_TOKEN} \
                               -Dsonar.projectKey=DevOps-AppGestionDesProjets-Backend \
                               -Dsonar.projectName="DevOps App Gestion Projets Backend"
                         '''
