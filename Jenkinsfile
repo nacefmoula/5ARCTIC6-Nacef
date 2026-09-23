@@ -26,12 +26,12 @@ pipeline {
             }
         }
 
-        stage('3. Analyse SonarQube') {
+       stage('3. Analyse SonarQube') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     dir('backend') {
                         sh '''
-                            mvn sonar:sonar \
+                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                               -Dsonar.host.url=http://localhost:9000 \
                               -Dsonar.token=${SONAR_TOKEN} \
                               -Dsonar.projectKey=DevOps-AppGestionDesProjets-Backend \
@@ -41,7 +41,7 @@ pipeline {
                 }
             }
         }
-
+        
         stage('4. Docker Build & Push') {
             steps {
                 script {
