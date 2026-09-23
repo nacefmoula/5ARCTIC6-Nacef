@@ -226,4 +226,4 @@ pipeline {
 
 ## 👤 Auteur
 
-**ESPRIT — UP ASI**  
+**ESPRIT — UP ASI**  # Automated Trigger Test
