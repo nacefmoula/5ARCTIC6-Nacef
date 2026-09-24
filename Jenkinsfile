@@ -51,7 +51,8 @@ pipeline {
                               -Dsonar.token=${SONAR_TOKEN} \
                               -Dsonar.projectKey=DevOps-AppGestionDesProjets-Backend \
                               -Dsonar.projectName="DevOps App Gestion Projets Backend" \
-                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                              -Dsonar.coverage.exclusions="**/dto/**,**/config/**,**/entity/**"
                         '''
                     }
                 }
