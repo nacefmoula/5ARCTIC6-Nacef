@@ -66,19 +66,26 @@ pipeline {
                         usernameVariable: 'DOCKER_USER', 
                         passwordVariable: 'DOCKER_PASS'
                     )]) {
-                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                        // Login avec tolérance aux pannes réseau / DNS
+                        retry(3) {
+                            sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                        }
 
                         // Build et Push Backend
                         echo "=== Construction et Push de l'image Backend ==="
                         sh "docker build -t ${BACKEND_IMAGE}:${BUILD_TAG} -t ${BACKEND_IMAGE}:latest ./backend"
-                        sh "docker push ${BACKEND_IMAGE}:${BUILD_TAG}"
-                        sh "docker push ${BACKEND_IMAGE}:latest"
+                        retry(3) {
+                            sh "docker push ${BACKEND_IMAGE}:${BUILD_TAG}"
+                            sh "docker push ${BACKEND_IMAGE}:latest"
+                        }
 
                         // Build et Push Frontend
                         echo "=== Construction et Push de l'image Frontend ==="
                         sh "docker build -t ${FRONTEND_IMAGE}:${BUILD_TAG} -t ${FRONTEND_IMAGE}:latest ./frontend"
-                        sh "docker push ${FRONTEND_IMAGE}:${BUILD_TAG}"
-                        sh "docker push ${FRONTEND_IMAGE}:latest"
+                        retry(3) {
+                            sh "docker push ${FRONTEND_IMAGE}:${BUILD_TAG}"
+                            sh "docker push ${FRONTEND_IMAGE}:latest"
+                        }
                     }
                 }
             }
