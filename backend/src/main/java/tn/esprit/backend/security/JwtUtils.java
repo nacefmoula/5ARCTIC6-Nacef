@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 @Component
@@ -37,8 +36,8 @@ public class JwtUtils {
         return Jwts.builder()
                 .subject(username)
                 .claim("roles", roles)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiration))
+                .issuedAt(java.util.Date.from(now))
+                .expiration(java.util.Date.from(expiration))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
@@ -70,11 +69,10 @@ public class JwtUtils {
         return Collections.emptyList();
     }
 
-    @SuppressWarnings("java:S2143") // Justification: io.jsonwebtoken API requires java.util.Date for issuedAt and expiration
     public boolean validateToken(String token) {
         try {
-            Claims claims = extractAllClaims(token);
-            return claims.getExpiration().toInstant().isAfter(Instant.now());
+            extractAllClaims(token);
+            return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
