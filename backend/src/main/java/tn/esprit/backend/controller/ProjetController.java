@@ -21,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/projet")
 @AllArgsConstructor
-@CrossOrigin("*")
 @Tag(name = "Projets", description = "Gestion des projets transverses de l'organisation")
 public class ProjetController {
 

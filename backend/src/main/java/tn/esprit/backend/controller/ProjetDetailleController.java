@@ -21,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/projet-detaille")
 @AllArgsConstructor
-@CrossOrigin("*")
 @Tag(name = "Projets Détaillés", description = "Gestion des spécifications techniques et budgétaires des projets")
 public class ProjetDetailleController {
 

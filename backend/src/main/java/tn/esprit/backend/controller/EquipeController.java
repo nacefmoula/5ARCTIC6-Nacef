@@ -21,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/equipe")
 @AllArgsConstructor
-@CrossOrigin("*")
 @Tag(name = "Équipes", description = "Gestion des équipes de projet et de leurs affectations")
 public class EquipeController {
 

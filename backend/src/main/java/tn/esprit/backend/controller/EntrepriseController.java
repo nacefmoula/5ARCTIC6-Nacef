@@ -21,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/entreprise")
 @AllArgsConstructor
-@CrossOrigin("*")
 @Tag(name = "Entreprises", description = "Gestion des entreprises partenaires et clientes")
 public class EntrepriseController {
 
