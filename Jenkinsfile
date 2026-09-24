@@ -68,6 +68,12 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to Kubernetes') {
+    steps {
+        sh 'kubectl rollout restart deployment/backend'
+        sh 'kubectl rollout restart deployment/frontend'
+    }
     }
 
     post {
