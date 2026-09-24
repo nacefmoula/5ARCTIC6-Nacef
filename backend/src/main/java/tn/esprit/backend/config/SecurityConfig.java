@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,16 +35,6 @@ public class SecurityConfig {
     private final AuthEntryPointJwt unauthorizedHandler;
     private final AuthAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    private static final String[] PUBLIC_URLS = {
-            "/api/auth/**",
-            "/auth/**",
-            "/actuator/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/v3/api-docs/**",
-            "/v3/api-docs"
-    };
 
     private static final String[] BUSINESS_URLS = {
             "/entreprise/**",
@@ -85,7 +74,7 @@ public class SecurityConfig {
         try {
             http
                     .cors(Customizer.withDefaults())
-                    .csrf(AbstractHttpConfigurer::disable)
+                    .csrf(csrf -> csrf.disable())
                     .exceptionHandling(exception -> exception
                             .authenticationEntryPoint(unauthorizedHandler)
                             .accessDeniedHandler(accessDeniedHandler)
@@ -95,7 +84,8 @@ public class SecurityConfig {
                     )
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                            .requestMatchers(PUBLIC_URLS).permitAll()
+                            .requestMatchers("/api/auth/**", "/auth/**").permitAll()
+                            .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                             .requestMatchers(HttpMethod.GET, BUSINESS_URLS).hasAnyRole(ROLE_USER, ROLE_ADMIN)
                             .requestMatchers(HttpMethod.POST, BUSINESS_URLS).hasRole(ROLE_ADMIN)
                             .requestMatchers(HttpMethod.PUT, BUSINESS_URLS).hasRole(ROLE_ADMIN)

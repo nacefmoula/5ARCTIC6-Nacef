@@ -88,4 +88,36 @@ class JwtAuthenticationFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(filterChain).doFilter(request, response);
     }
+
+    @Test
+    @DisplayName("shouldNotFilter should return true for auth, actuator and swagger routes")
+    void testShouldNotFilterPublicPaths() {
+        MockHttpServletRequest reqAuth = new MockHttpServletRequest();
+        reqAuth.setServletPath("/api/auth/login");
+        assertThat(jwtAuthenticationFilter.shouldNotFilter(reqAuth)).isTrue();
+
+        MockHttpServletRequest reqAuthShort = new MockHttpServletRequest();
+        reqAuthShort.setServletPath("/auth/register");
+        assertThat(jwtAuthenticationFilter.shouldNotFilter(reqAuthShort)).isTrue();
+
+        MockHttpServletRequest reqActuator = new MockHttpServletRequest();
+        reqActuator.setServletPath("/actuator/health");
+        assertThat(jwtAuthenticationFilter.shouldNotFilter(reqActuator)).isTrue();
+
+        MockHttpServletRequest reqSwagger = new MockHttpServletRequest();
+        reqSwagger.setServletPath("/swagger-ui/index.html");
+        assertThat(jwtAuthenticationFilter.shouldNotFilter(reqSwagger)).isTrue();
+    }
+
+    @Test
+    @DisplayName("shouldNotFilter should return false for business routes and null path")
+    void testShouldNotFilterProtectedPaths() {
+        MockHttpServletRequest reqBusiness = new MockHttpServletRequest();
+        reqBusiness.setServletPath("/api/entreprise/1");
+        assertThat(jwtAuthenticationFilter.shouldNotFilter(reqBusiness)).isFalse();
+
+        MockHttpServletRequest reqNull = new MockHttpServletRequest();
+        reqNull.setServletPath(null);
+        assertThat(jwtAuthenticationFilter.shouldNotFilter(reqNull)).isFalse();
+    }
 }
