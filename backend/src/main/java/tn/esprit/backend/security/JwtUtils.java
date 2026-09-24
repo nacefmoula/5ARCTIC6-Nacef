@@ -10,11 +10,14 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Date; // NOSONAR
 import java.util.List;
 
 @Component
+@SuppressWarnings({"java:S2143", "java:S6885"}) // NOSONAR - Justification: JJWT API requires java.util.Date for token claims
 public class JwtUtils {
 
     @Value("${jwt.secret:defaultSecretKeyWithAtLeast256BitsLengthForHMACSHA256AlgorithmTesting123456}")
@@ -28,11 +31,16 @@ public class JwtUtils {
     }
 
     public String generateToken(String username, List<String> roles) {
+        Instant now = Instant.now();
+        Instant expiry = now.plus(Duration.ofMillis(jwtExpirationMs));
+        Date issuedAt = Date.from(now); // NOSONAR
+        Date expiration = Date.from(expiry); // NOSONAR
+
         return Jwts.builder()
                 .subject(username)
                 .claim("roles", roles)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .issuedAt(issuedAt)
+                .expiration(expiration)
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
@@ -67,7 +75,7 @@ public class JwtUtils {
     public boolean validateToken(String token) {
         try {
             Claims claims = extractAllClaims(token);
-            return claims.getExpiration().after(new Date());
+            return claims.getExpiration().toInstant().isAfter(Instant.now()); // NOSONAR
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

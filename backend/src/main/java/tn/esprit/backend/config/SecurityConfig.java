@@ -1,6 +1,7 @@
 package tn.esprit.backend.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,9 @@ import tn.esprit.backend.security.UserDetailsServiceImpl;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final String ROLE_ADMIN = "ADMIN";
+    private static final String ROLE_USER = "USER";
 
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
@@ -67,34 +71,43 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) {
+        try {
+            return authConfig.getAuthenticationManager();
+        } catch (Exception e) {
+            throw new BeanInitializationException("Failed to get AuthenticationManager", e);
+        }
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(unauthorizedHandler)
-                        .accessDeniedHandler(accessDeniedHandler)
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(PUBLIC_URLS).permitAll()
-                        .requestMatchers(HttpMethod.GET, BUSINESS_URLS).hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, BUSINESS_URLS).hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, BUSINESS_URLS).hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, BUSINESS_URLS).hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+    @SuppressWarnings("java:S4502") // Justification: Stateless REST API using JWT Bearer authentication is not vulnerable to CSRF
+    public SecurityFilterChain filterChain(HttpSecurity http) {
+        try {
+            http
+                    .cors(Customizer.withDefaults())
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .exceptionHandling(exception -> exception
+                            .authenticationEntryPoint(unauthorizedHandler)
+                            .accessDeniedHandler(accessDeniedHandler)
+                    )
+                    .sessionManagement(session -> session
+                            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    )
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                            .requestMatchers(PUBLIC_URLS).permitAll()
+                            .requestMatchers(HttpMethod.GET, BUSINESS_URLS).hasAnyRole(ROLE_USER, ROLE_ADMIN)
+                            .requestMatchers(HttpMethod.POST, BUSINESS_URLS).hasRole(ROLE_ADMIN)
+                            .requestMatchers(HttpMethod.PUT, BUSINESS_URLS).hasRole(ROLE_ADMIN)
+                            .requestMatchers(HttpMethod.DELETE, BUSINESS_URLS).hasRole(ROLE_ADMIN)
+                            .anyRequest().authenticated()
+                    )
+                    .authenticationProvider(authenticationProvider())
+                    .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+            return http.build();
+        } catch (Exception e) {
+            throw new BeanInitializationException("Failed to configure SecurityFilterChain", e);
+        }
     }
 }
