@@ -15,7 +15,7 @@ spec:
       containers:
         - name: backend
           image: nacefmoula123/devops-backend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:mysql://mysql-service:3306/gestion_projets?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
