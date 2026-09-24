@@ -13,11 +13,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Date; // NOSONAR
+import java.util.Date;
 import java.util.List;
 
 @Component
-@SuppressWarnings({"java:S2143", "java:S6885"}) // NOSONAR - Justification: JJWT API requires java.util.Date for token claims
 public class JwtUtils {
 
     @Value("${jwt.secret:defaultSecretKeyWithAtLeast256BitsLengthForHMACSHA256AlgorithmTesting123456}")
@@ -30,17 +29,16 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
+    @SuppressWarnings("java:S2143") // Justification: io.jsonwebtoken API requires java.util.Date for issuedAt and expiration
     public String generateToken(String username, List<String> roles) {
         Instant now = Instant.now();
-        Instant expiry = now.plus(Duration.ofMillis(jwtExpirationMs));
-        Date issuedAt = Date.from(now); // NOSONAR
-        Date expiration = Date.from(expiry); // NOSONAR
+        Instant expiration = now.plus(Duration.ofMillis(jwtExpirationMs));
 
         return Jwts.builder()
                 .subject(username)
                 .claim("roles", roles)
-                .issuedAt(issuedAt)
-                .expiration(expiration)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
@@ -72,10 +70,11 @@ public class JwtUtils {
         return Collections.emptyList();
     }
 
+    @SuppressWarnings("java:S2143") // Justification: io.jsonwebtoken API requires java.util.Date for issuedAt and expiration
     public boolean validateToken(String token) {
         try {
             Claims claims = extractAllClaims(token);
-            return claims.getExpiration().toInstant().isAfter(Instant.now()); // NOSONAR
+            return claims.getExpiration().toInstant().isAfter(Instant.now());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
