@@ -4,9 +4,11 @@
       <h1 class="page-title">👥 Équipes de Projet</h1>
       <p class="page-subtitle">Gestion des pôles techniques, spécialités et rattachements organisationnels</p>
     </div>
-    <button class="btn btn-primary" (click)="openAdd()">
-      <span>+ Nouvelle Équipe</span>
-    </button>
+    @if (authService.isAdmin()) {
+      <button class="btn btn-primary" (click)="openAdd()">
+        <span>+ Nouvelle Équipe</span>
+      </button>
+    }
   </div>
 
   <!-- Cartes récapitulatives / Dashboard metrics -->
@@ -161,12 +163,16 @@
                 </td>
                 <td style="text-align: right">
                   <div class="actions" style="justify-content: flex-end">
-                    <button class="btn btn-secondary btn-sm" (click)="edit(e)" title="Modifier les informations">
-                      ✏️ Modifier
-                    </button>
-                    <button class="btn btn-danger btn-sm" (click)="delete(e.id, e.nom)" title="Supprimer définitivement">
-                      🗑️
-                    </button>
+                    @if (authService.isAdmin()) {
+                      <button class="btn btn-secondary btn-sm" (click)="edit(e)" title="Modifier les informations">
+                        ✏️ Modifier
+                      </button>
+                      <button class="btn btn-danger btn-sm" (click)="delete(e.id, e.nom)" title="Supprimer définitivement">
+                        🗑️
+                      </button>
+                    } @else {
+                      <span class="badge" style="background: #f1f5f9; color: #64748b">Lecture seule</span>
+                    }
                   </div>
                 </td>
               </tr>

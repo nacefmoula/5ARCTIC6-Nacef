@@ -53,6 +53,30 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ProblemDetail handleAuthenticationException(org.springframework.security.core.AuthenticationException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage() != null ? ex.getMessage() : "Échec d'authentification."
+        );
+        problemDetail.setTitle("Non Authentifié");
+        problemDetail.setType(URI.create("https://api.gestionprojets.tn/errors/unauthorized"));
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                "Accès refusé : vous n'avez pas les autorisations nécessaires."
+        );
+        problemDetail.setTitle("Accès Refusé");
+        problemDetail.setType(URI.create("https://api.gestionprojets.tn/errors/forbidden"));
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGlobalException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(

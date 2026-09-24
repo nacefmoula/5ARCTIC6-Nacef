@@ -8,6 +8,8 @@ import { PaginationComponent } from '../../components/pagination/pagination';
 import { ProblemDetail } from '../../models/api-response.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { AuthService } from '../../services/auth.service';
+
 @Component({
   selector: 'app-projets',
   imports: [FormsModule, PaginationComponent],
@@ -18,6 +20,7 @@ export class ProjetsComponent implements OnInit {
   private service = inject(ProjetService);
   private toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
+  public authService = inject(AuthService);
 
   projets = signal<ProjetResponseDTO[]>([]);
   totalElements = signal(0);

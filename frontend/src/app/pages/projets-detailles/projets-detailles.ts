@@ -11,6 +11,8 @@ import { PaginationComponent } from '../../components/pagination/pagination';
 import { ProblemDetail } from '../../models/api-response.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { AuthService } from '../../services/auth.service';
+
 @Component({
   selector: 'app-projets-detailles',
   imports: [FormsModule, DecimalPipe, PaginationComponent],
@@ -22,6 +24,7 @@ export class ProjetsDetaillesComponent implements OnInit {
   private projetService = inject(ProjetService);
   private toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
+  public authService = inject(AuthService);
 
   projetsDetailles = signal<ProjetDetailleResponseDTO[]>([]);
   projets = signal<ProjetResponseDTO[]>([]);

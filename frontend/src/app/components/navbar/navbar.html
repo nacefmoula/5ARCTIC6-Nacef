@@ -4,26 +4,53 @@
     <span class="brand-name">DevOps</span>
   </div>
 
+  @if (authService.isAuthenticated()) {
+    <div class="user-card">
+      <div class="user-avatar">
+        {{ authService.currentUser()?.username?.charAt(0)?.toUpperCase() || 'U' }}
+      </div>
+      <div class="user-info">
+        <span class="user-name">{{ authService.currentUser()?.username }}</span>
+        <span class="role-badge" [class.admin]="authService.isAdmin()">
+          {{ authService.isAdmin() ? 'ADMIN' : 'USER' }}
+        </span>
+      </div>
+    </div>
+  }
+
   <nav class="nav">
-    <a routerLink="/entreprises" routerLinkActive="active" class="nav-item">
-      <span class="nav-icon">🏢</span>
-      <span>Entreprises</span>
-    </a>
-    <a routerLink="/equipes" routerLinkActive="active" class="nav-item">
-      <span class="nav-icon">👥</span>
-      <span>Équipes</span>
-    </a>
-    <a routerLink="/projets" routerLinkActive="active" class="nav-item">
-      <span class="nav-icon">📁</span>
-      <span>Projets</span>
-    </a>
-    <a routerLink="/projets-detailles" routerLinkActive="active" class="nav-item">
-      <span class="nav-icon">📋</span>
-      <span>Projets Détaillés</span>
-    </a>
+    @if (authService.isAuthenticated()) {
+      <a routerLink="/entreprises" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🏢</span>
+        <span>Entreprises</span>
+      </a>
+      <a routerLink="/equipes" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span>Équipes</span>
+      </a>
+      <a routerLink="/projets" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📁</span>
+        <span>Projets</span>
+      </a>
+      <a routerLink="/projets-detailles" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span>Projets Détaillés</span>
+      </a>
+    } @else {
+      <a routerLink="/login" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🔐</span>
+        <span>Connexion</span>
+      </a>
+    }
   </nav>
 
   <div class="sidebar-footer">
-    <span>Spring Boot + Angular</span>
+    @if (authService.isAuthenticated()) {
+      <button type="button" class="btn-logout" (click)="logout()">
+        <span class="logout-icon">🚪</span>
+        <span>Déconnexion</span>
+      </button>
+    }
+    <div class="footer-note">Spring Boot + Angular JWT</div>
   </div>
 </aside>

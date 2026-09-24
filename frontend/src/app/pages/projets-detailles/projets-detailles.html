@@ -4,9 +4,11 @@
       <h1 class="page-title">📋 Spécifications & Projets Détaillés</h1>
       <p class="page-subtitle">Gestion des détails techniques, budgets et plannings des projets</p>
     </div>
-    <button class="btn btn-primary" (click)="openAdd()">
-      <span>+ Nouveau Détail Projet</span>
-    </button>
+    @if (authService.isAdmin()) {
+      <button class="btn btn-primary" (click)="openAdd()">
+        <span>+ Nouveau Détail Projet</span>
+      </button>
+    }
   </div>
 
   <!-- Cartes récapitulatives / Dashboard metrics -->
@@ -196,12 +198,16 @@
                 </td>
                 <td style="text-align: right">
                   <div class="actions" style="justify-content: flex-end">
-                    <button class="btn btn-secondary btn-sm" (click)="edit(pd)" title="Modifier la fiche">
-                      ✏️ Modifier
-                    </button>
-                    <button class="btn btn-danger btn-sm" (click)="delete(pd.id)" title="Supprimer définitivement">
-                      🗑️
-                    </button>
+                    @if (authService.isAdmin()) {
+                      <button class="btn btn-secondary btn-sm" (click)="edit(pd)" title="Modifier la fiche">
+                        ✏️ Modifier
+                      </button>
+                      <button class="btn btn-danger btn-sm" (click)="delete(pd.id)" title="Supprimer définitivement">
+                        🗑️
+                      </button>
+                    } @else {
+                      <span class="badge" style="background: #f1f5f9; color: #64748b">Lecture seule</span>
+                    }
                   </div>
                 </td>
               </tr>

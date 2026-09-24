@@ -79,4 +79,30 @@ class GlobalExceptionHandlerTest {
         assertThat(pd.getTitle()).isEqualTo("Erreur Interne du Serveur");
         assertThat(pd.getDetail()).isEqualTo("Une erreur interne inattendue s'est produite.");
     }
+
+    @Test
+    @DisplayName("Should handle AuthenticationException and return 401 ProblemDetail")
+    void testHandleAuthenticationException() {
+        org.springframework.security.authentication.BadCredentialsException ex =
+                new org.springframework.security.authentication.BadCredentialsException("Mauvais identifiants");
+        ProblemDetail pd = exceptionHandler.handleAuthenticationException(ex);
+
+        assertThat(pd.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(pd.getTitle()).isEqualTo("Non Authentifié");
+        assertThat(pd.getDetail()).isEqualTo("Mauvais identifiants");
+        assertThat(pd.getProperties()).containsKey("timestamp");
+    }
+
+    @Test
+    @DisplayName("Should handle AccessDeniedException and return 403 ProblemDetail")
+    void testHandleAccessDeniedException() {
+        org.springframework.security.access.AccessDeniedException ex =
+                new org.springframework.security.access.AccessDeniedException("Accès refusé");
+        ProblemDetail pd = exceptionHandler.handleAccessDeniedException(ex);
+
+        assertThat(pd.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(pd.getTitle()).isEqualTo("Accès Refusé");
+        assertThat(pd.getDetail()).contains("Accès refusé");
+        assertThat(pd.getProperties()).containsKey("timestamp");
+    }
 }

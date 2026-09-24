@@ -24,7 +24,14 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import tn.esprit.backend.security.JwtUtils;
+import tn.esprit.backend.security.UserDetailsServiceImpl;
+
 @WebMvcTest(ProjetController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@WithMockUser(roles = "ADMIN")
 class ProjetControllerTest {
 
     @Autowired
@@ -34,6 +41,12 @@ class ProjetControllerTest {
 
     @MockitoBean
     private IProjetService projetService;
+
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private UserDetailsServiceImpl userDetailsService;
 
     @Test
     @DisplayName("POST /projet/add should succeed with 201 Created when data is valid")

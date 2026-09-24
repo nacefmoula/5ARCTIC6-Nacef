@@ -4,9 +4,11 @@
       <h1 class="page-title">📁 Projets de l'Organisation</h1>
       <p class="page-subtitle">Suivi du portefeuille de projets et alignement stratégique</p>
     </div>
-    <button class="btn btn-primary" (click)="openAdd()">
-      <span>+ Nouveau Projet</span>
-    </button>
+    @if (authService.isAdmin()) {
+      <button class="btn btn-primary" (click)="openAdd()">
+        <span>+ Nouveau Projet</span>
+      </button>
+    }
   </div>
 
   <!-- Cartes récapitulatives / Dashboard metrics -->
@@ -122,12 +124,16 @@
                 <td><strong>{{ p.sujet }}</strong></td>
                 <td style="text-align: right">
                   <div class="actions" style="justify-content: flex-end">
-                    <button class="btn btn-secondary btn-sm" (click)="edit(p)" title="Modifier les informations">
-                      ✏️ Modifier
-                    </button>
-                    <button class="btn btn-danger btn-sm" (click)="delete(p.id, p.sujet)" title="Supprimer définitivement">
-                      🗑️
-                    </button>
+                    @if (authService.isAdmin()) {
+                      <button class="btn btn-secondary btn-sm" (click)="edit(p)" title="Modifier les informations">
+                        ✏️ Modifier
+                      </button>
+                      <button class="btn btn-danger btn-sm" (click)="delete(p.id, p.sujet)" title="Supprimer définitivement">
+                        🗑️
+                      </button>
+                    } @else {
+                      <span class="badge" style="background: #f1f5f9; color: #64748b">Lecture seule</span>
+                    }
                   </div>
                 </td>
               </tr>

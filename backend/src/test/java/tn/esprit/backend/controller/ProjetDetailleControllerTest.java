@@ -28,7 +28,14 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import tn.esprit.backend.security.JwtUtils;
+import tn.esprit.backend.security.UserDetailsServiceImpl;
+
 @WebMvcTest(ProjetDetailleController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@WithMockUser(roles = "ADMIN")
 class ProjetDetailleControllerTest {
 
     @Autowired
@@ -38,6 +45,12 @@ class ProjetDetailleControllerTest {
 
     @MockitoBean
     private IProjetDetailleService projetDetailleService;
+
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private UserDetailsServiceImpl userDetailsService;
 
     @BeforeEach
     void setUp() {

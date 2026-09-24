@@ -1,0 +1,165 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">⚙️</div>
+      <h2>DevOps App Gestion Des Projets</h2>
+      <p class="auth-subtitle">
+        @if (!isRegisterMode()) {
+          Authentification sécurisée avec jeton JWT
+        } @else {
+          Créer un nouveau compte utilisateur
+        }
+      </p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-error">
+        <span class="alert-icon">⚠️</span>
+        <div>{{ errorMessage() }}</div>
+      </div>
+    }
+
+    <!-- Quick Demo Accounts -->
+    @if (!isRegisterMode()) {
+      <div class="demo-box">
+        <span class="demo-title">Identifiants de démonstration :</span>
+        <div class="demo-buttons">
+          <button type="button" class="btn-demo" (click)="fillDemo('admin')">
+            <span class="demo-badge admin">ADMIN</span> admin / Admin123!
+          </button>
+          <button type="button" class="btn-demo" (click)="fillDemo('user')">
+            <span class="demo-badge user">USER</span> user / User123!
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (!isRegisterMode()) {
+      <!-- LOGIN FORM -->
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="auth-form" novalidate>
+        <div class="form-group" [class.has-error]="loginForm.get('username')?.touched && loginForm.get('username')?.invalid || fieldErrors()['username']">
+          <label for="username">Nom d'utilisateur</label>
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            placeholder="Ex: admin ou user"
+            autocomplete="username"
+          />
+          @if (loginForm.get('username')?.touched && loginForm.get('username')?.errors?.['required']) {
+            <span class="error-text">Le nom d'utilisateur est obligatoire.</span>
+          }
+          @if (fieldErrors()['username']) {
+            <span class="error-text">{{ fieldErrors()['username'] }}</span>
+          }
+        </div>
+
+        <div class="form-group" [class.has-error]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid || fieldErrors()['password']">
+          <label for="password">Mot de passe</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          @if (loginForm.get('password')?.touched && loginForm.get('password')?.errors?.['required']) {
+            <span class="error-text">Le mot de passe est obligatoire.</span>
+          }
+          @if (fieldErrors()['password']) {
+            <span class="error-text">{{ fieldErrors()['password'] }}</span>
+          }
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner"></span> Connexion en cours...
+          } @else {
+            Se connecter
+          }
+        </button>
+      </form>
+    } @else {
+      <!-- REGISTER FORM -->
+      <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form" novalidate>
+        <div class="form-group" [class.has-error]="registerForm.get('username')?.touched && registerForm.get('username')?.invalid || fieldErrors()['username']">
+          <label for="reg-username">Nom d'utilisateur</label>
+          <input
+            id="reg-username"
+            type="text"
+            formControlName="username"
+            placeholder="Ex: john_doe"
+            autocomplete="username"
+          />
+          @if (registerForm.get('username')?.touched && registerForm.get('username')?.errors?.['required']) {
+            <span class="error-text">Le nom d'utilisateur est obligatoire.</span>
+          }
+          @if (registerForm.get('username')?.touched && registerForm.get('username')?.errors?.['minlength']) {
+            <span class="error-text">Au moins 3 caractères requis.</span>
+          }
+          @if (fieldErrors()['username']) {
+            <span class="error-text">{{ fieldErrors()['username'] }}</span>
+          }
+        </div>
+
+        <div class="form-group" [class.has-error]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid || fieldErrors()['email']">
+          <label for="reg-email">Adresse Email</label>
+          <input
+            id="reg-email"
+            type="email"
+            formControlName="email"
+            placeholder="Ex: john@example.com"
+            autocomplete="email"
+          />
+          @if (registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['required']) {
+            <span class="error-text">L'email est obligatoire.</span>
+          }
+          @if (registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['email']) {
+            <span class="error-text">Format d'adresse email invalide.</span>
+          }
+          @if (fieldErrors()['email']) {
+            <span class="error-text">{{ fieldErrors()['email'] }}</span>
+          }
+        </div>
+
+        <div class="form-group" [class.has-error]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid || fieldErrors()['password']">
+          <label for="reg-password">Mot de passe</label>
+          <input
+            id="reg-password"
+            type="password"
+            formControlName="password"
+            placeholder="Au moins 6 caractères"
+            autocomplete="new-password"
+          />
+          @if (registerForm.get('password')?.touched && registerForm.get('password')?.errors?.['required']) {
+            <span class="error-text">Le mot de passe est obligatoire.</span>
+          }
+          @if (registerForm.get('password')?.touched && registerForm.get('password')?.errors?.['minlength']) {
+            <span class="error-text">Au moins 6 caractères requis.</span>
+          }
+          @if (fieldErrors()['password']) {
+            <span class="error-text">{{ fieldErrors()['password'] }}</span>
+          }
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner"></span> Création du compte...
+          } @else {
+            S'inscrire (ROLE_USER)
+          }
+        </button>
+      </form>
+    }
+
+    <div class="auth-toggle">
+      @if (!isRegisterMode()) {
+        <span>Pas encore de compte ?</span>
+        <button type="button" class="btn-link" (click)="toggleMode()">Créer un compte</button>
+      } @else {
+        <span>Déjà un compte ?</span>
+        <button type="button" class="btn-link" (click)="toggleMode()">Se connecter</button>
+      }
+    </div>
+  </div>
+</div>
