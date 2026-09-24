@@ -223,8 +223,4 @@ pipeline {
 | Conteneurisation | Docker *(à venir)* |
 
 ---
-
-## 👤 Auteur
-
-**ESPRIT — UP ASI**  # Automated Trigger Test
-nacefmoula
+delete autgor 
