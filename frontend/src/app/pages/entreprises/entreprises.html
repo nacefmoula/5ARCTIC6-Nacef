@@ -2,63 +2,167 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">🏢 Entreprises</h1>
-      <p class="page-subtitle">Gérer les entreprises et leurs informations</p>
+      <p class="page-subtitle">Gestion des partenaires, filiales et clients de l'organisation</p>
     </div>
-    <button class="btn btn-primary" (click)="openAdd()">+ Ajouter</button>
+    <button class="btn btn-primary" (click)="openAdd()">
+      <span>+ Nouvelle Entreprise</span>
+    </button>
   </div>
 
+  <!-- Cartes récapitulatives / Dashboard metrics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🏢</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalElements() }}</span>
+        <span class="stat-label">Entreprises enregistrées</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📄</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalPages() }}</span>
+        <span class="stat-label">Pages de données</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-info">
+        <span class="stat-value">RFC 7807</span>
+        <span class="stat-label">Validation & DTOs stricts</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de saisie avec gestion RFC 7807 -->
   @if (showForm()) {
     <div class="form-card">
-      <h3 class="form-title">{{ editMode() ? 'Modifier' : 'Nouvelle' }} Entreprise</h3>
+      <div class="form-header">
+        <h3 class="form-title">{{ editMode() ? '✏️ Modifier' : '✨ Nouvelle' }} Entreprise</h3>
+        <span class="chip">{{ editMode() ? 'ID #' + current().id : 'Mode Création' }}</span>
+      </div>
+
       <div class="form-grid">
-        <div class="form-group">
-          <label>Nom</label>
-          <input type="text" [value]="current().nom" (input)="update('nom', $any($event.target).value)" placeholder="Nom de l'entreprise" />
+        <div class="form-group" [class.has-error]="fieldErrors()['nom']">
+          <label for="nomInput">Nom de l'entreprise <span class="required-star">*</span></label>
+          <input
+            id="nomInput"
+            type="text"
+            [class.input-error]="fieldErrors()['nom']"
+            [value]="current().nom"
+            (input)="updateField('nom', $event)"
+            placeholder="Ex: Orange Business, Esprit IT..."
+            autocomplete="organization"
+          />
+          @if (fieldErrors()['nom']) {
+            <span class="field-error">⚠ {{ fieldErrors()['nom'] }}</span>
+          }
         </div>
-        <div class="form-group">
-          <label>Adresse</label>
-          <input type="text" [value]="current().adresse" (input)="update('adresse', $any($event.target).value)" placeholder="Adresse" />
+
+        <div class="form-group" [class.has-error]="fieldErrors()['adresse']">
+          <label for="adresseInput">Adresse postale <span class="required-star">*</span></label>
+          <input
+            id="adresseInput"
+            type="text"
+            [class.input-error]="fieldErrors()['adresse']"
+            [value]="current().adresse"
+            (input)="updateField('adresse', $event)"
+            placeholder="Ex: Pôle Technologique El Ghazala, Tunis"
+            autocomplete="street-address"
+          />
+          @if (fieldErrors()['adresse']) {
+            <span class="field-error">⚠ {{ fieldErrors()['adresse'] }}</span>
+          }
         </div>
       </div>
+
       <div class="form-actions">
-        <button class="btn btn-primary" (click)="save()">{{ editMode() ? 'Mettre à jour' : 'Enregistrer' }}</button>
-        <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner spinner-sm"></span>
+            <span>Enregistrement...</span>
+          } @else {
+            <span>{{ editMode() ? 'Mettre à jour' : 'Enregistrer l\'entreprise' }}</span>
+          }
+        </button>
+        <button class="btn btn-secondary" (click)="cancel()" [disabled]="saving()">
+          Annuler
+        </button>
       </div>
     </div>
   }
 
+  <!-- Barre d'outils et recherche -->
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher par nom, adresse ou ID..."
+        [value]="searchTerm()"
+        (input)="onSearch($event)"
+      />
+    </div>
+    <button class="btn btn-secondary btn-sm" (click)="load()" title="Actualiser la liste">
+      🔄 Actualiser
+    </button>
+  </div>
+
+  <!-- Tableau des données -->
   <div class="card">
-    @if (entreprises().length === 0) {
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Chargement des entreprises...</p>
+      </div>
+    } @else if (filteredEntreprises().length === 0) {
       <div class="empty">
         <div class="empty-icon">🏢</div>
-        <p>Aucune entreprise enregistrée</p>
+        <h3>Aucune entreprise trouvée</h3>
+        <p>{{ searchTerm() ? 'Aucun résultat ne correspond à votre recherche.' : 'Commencez par ajouter une nouvelle entreprise.' }}</p>
       </div>
     } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Nom</th>
-            <th>Adresse</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (e of entreprises(); track e.id) {
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td><span class="badge">{{ e.id }}</span></td>
-              <td><strong>{{ e.nom }}</strong></td>
-              <td>{{ e.adresse }}</td>
-              <td>
-                <div class="actions">
-                  <button class="btn btn-secondary btn-sm" (click)="edit(e)">✏️ Modifier</button>
-                  <button class="btn btn-danger btn-sm" (click)="delete(e.id!)">🗑️ Supprimer</button>
-                </div>
-              </td>
+              <th style="width: 80px">ID</th>
+              <th>Nom de l'entreprise</th>
+              <th>Adresse</th>
+              <th style="width: 190px; text-align: right">Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (e of filteredEntreprises(); track e.id) {
+              <tr>
+                <td><span class="badge">#{{ e.id }}</span></td>
+                <td><strong>{{ e.nom }}</strong></td>
+                <td>{{ e.adresse }}</td>
+                <td style="text-align: right">
+                  <div class="actions" style="justify-content: flex-end">
+                    <button class="btn btn-secondary btn-sm" (click)="edit(e)" title="Modifier les informations">
+                      ✏️ Modifier
+                    </button>
+                    <button class="btn btn-danger btn-sm" (click)="delete(e.id, e.nom)" title="Supprimer définitivement">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="currentPage()"
+        [totalPages]="totalPages()"
+        [totalElements]="totalElements()"
+        [pageSize]="pageSize()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
     }
   </div>
 </div>

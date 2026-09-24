@@ -22,5 +22,6 @@ public class Entreprise {
 
     @JsonIgnore
     @OneToMany(mappedBy = "entreprise", fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Equipe> equipes = new ArrayList<>();
 }

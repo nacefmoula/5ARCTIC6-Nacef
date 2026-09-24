@@ -1,15 +1,37 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Entreprise } from '../models/entreprise.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { EntrepriseRequestDTO, EntrepriseResponseDTO } from '../models/entreprise.model';
+import { Page } from '../models/api-response.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class EntrepriseService {
   private http = inject(HttpClient);
-  private api = 'http://localhost:8080/entreprise';
+  private api = `${environment.apiUrl}/entreprise`;
 
-  getAll()            { return this.http.get<Entreprise[]>(`${this.api}/all`); }
-  getById(id: number) { return this.http.get<Entreprise>(`${this.api}/get/${id}`); }
-  add(e: Entreprise)  { return this.http.post<Entreprise>(`${this.api}/add`, e); }
-  update(e: Entreprise) { return this.http.put<Entreprise>(`${this.api}/update`, e); }
-  delete(id: number)  { return this.http.delete<void>(`${this.api}/delete/${id}`); }
+  getAll(): Observable<EntrepriseResponseDTO[]> {
+    return this.http.get<EntrepriseResponseDTO[]>(`${this.api}/all`);
+  }
+
+  getPage(page = 0, size = 10): Observable<Page<EntrepriseResponseDTO>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<EntrepriseResponseDTO>>(`${this.api}/page`, { params });
+  }
+
+  getById(id: number): Observable<EntrepriseResponseDTO> {
+    return this.http.get<EntrepriseResponseDTO>(`${this.api}/get/${id}`);
+  }
+
+  add(e: EntrepriseRequestDTO): Observable<EntrepriseResponseDTO> {
+    return this.http.post<EntrepriseResponseDTO>(`${this.api}/add`, e);
+  }
+
+  update(e: EntrepriseRequestDTO): Observable<EntrepriseResponseDTO> {
+    return this.http.put<EntrepriseResponseDTO>(`${this.api}/update`, e);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/delete/${id}`);
+  }
 }

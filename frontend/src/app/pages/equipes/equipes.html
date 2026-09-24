@@ -1,75 +1,188 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">👥 Équipes</h1>
-      <p class="page-subtitle">Gérer les équipes et leurs spécialités</p>
+      <h1 class="page-title">👥 Équipes de Projet</h1>
+      <p class="page-subtitle">Gestion des pôles techniques, spécialités et rattachements organisationnels</p>
     </div>
-    <button class="btn btn-primary" (click)="openAdd()">+ Ajouter</button>
+    <button class="btn btn-primary" (click)="openAdd()">
+      <span>+ Nouvelle Équipe</span>
+    </button>
   </div>
 
+  <!-- Cartes récapitulatives / Dashboard metrics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalElements() }}</span>
+        <span class="stat-label">Équipes opérationnelles</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏢</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ entreprises().length }}</span>
+        <span class="stat-label">Entreprises partenaires</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📑</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalPages() }}</span>
+        <span class="stat-label">Pages d'équipes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de saisie avec gestion RFC 7807 -->
   @if (showForm()) {
     <div class="form-card">
-      <h3 class="form-title">{{ editMode() ? 'Modifier' : 'Nouvelle' }} Équipe</h3>
+      <div class="form-header">
+        <h3 class="form-title">{{ editMode() ? '✏️ Modifier' : '✨ Nouvelle' }} Équipe</h3>
+        <span class="chip">{{ editMode() ? 'ID #' + current().id : 'Mode Création' }}</span>
+      </div>
+
       <div class="form-grid">
-        <div class="form-group">
-          <label>Nom</label>
-          <input type="text" [value]="current().nom" (input)="update('nom', $any($event.target).value)" placeholder="Nom de l'équipe" />
+        <div class="form-group" [class.has-error]="fieldErrors()['nom']">
+          <label for="equipeNomInput">Nom de l'équipe <span class="required-star">*</span></label>
+          <input
+            id="equipeNomInput"
+            type="text"
+            [class.input-error]="fieldErrors()['nom']"
+            [value]="current().nom"
+            (input)="updateField('nom', $event)"
+            placeholder="Ex: Squad DevOps Cloud, Team Frontend Core..."
+          />
+          @if (fieldErrors()['nom']) {
+            <span class="field-error">⚠ {{ fieldErrors()['nom'] }}</span>
+          }
         </div>
-        <div class="form-group">
-          <label>Spécialité</label>
-          <input type="text" [value]="current().specialite" (input)="update('specialite', $any($event.target).value)" placeholder="Ex: Backend, DevOps..." />
+
+        <div class="form-group" [class.has-error]="fieldErrors()['specialite']">
+          <label for="equipeSpecInput">Spécialité technique <span class="required-star">*</span></label>
+          <input
+            id="equipeSpecInput"
+            type="text"
+            [class.input-error]="fieldErrors()['specialite']"
+            [value]="current().specialite"
+            (input)="updateField('specialite', $event)"
+            placeholder="Ex: Kubernetes, SRE, Angular 22, Spring Boot..."
+          />
+          @if (fieldErrors()['specialite']) {
+            <span class="field-error">⚠ {{ fieldErrors()['specialite'] }}</span>
+          }
         </div>
-        <div class="form-group">
-          <label>Entreprise</label>
-          <select [value]="selectedEntrepriseId() ?? ''" (change)="selectedEntrepriseId.set($any($event.target).value ? +$any($event.target).value : null)">
-            <option value="">-- Sélectionner une entreprise --</option>
+
+        <div class="form-group" style="grid-column: 1 / -1">
+          <label for="equipeEntSelect">Entreprise de rattachement</label>
+          <select
+            id="equipeEntSelect"
+            [value]="selectedEntrepriseId() ?? ''"
+            (change)="onEntrepriseSelect($event)"
+          >
+            <option value="">-- Aucune entreprise affiliée --</option>
             @for (ent of entreprises(); track ent.id) {
-              <option [value]="ent.id">{{ ent.nom }}</option>
+              <option [value]="ent.id">{{ ent.nom }} (ID #{{ ent.id }})</option>
             }
           </select>
         </div>
       </div>
+
       <div class="form-actions">
-        <button class="btn btn-primary" (click)="save()">{{ editMode() ? 'Mettre à jour' : 'Enregistrer' }}</button>
-        <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner spinner-sm"></span>
+            <span>Enregistrement...</span>
+          } @else {
+            <span>{{ editMode() ? 'Mettre à jour' : 'Enregistrer l\'équipe' }}</span>
+          }
+        </button>
+        <button class="btn btn-secondary" (click)="cancel()" [disabled]="saving()">
+          Annuler
+        </button>
       </div>
     </div>
   }
 
+  <!-- Barre d'outils et recherche -->
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher par nom, spécialité ou entreprise..."
+        [value]="searchTerm()"
+        (input)="onSearch($event)"
+      />
+    </div>
+    <button class="btn btn-secondary btn-sm" (click)="load()" title="Actualiser la liste">
+      🔄 Actualiser
+    </button>
+  </div>
+
+  <!-- Tableau des données -->
   <div class="card">
-    @if (equipes().length === 0) {
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Chargement des équipes...</p>
+      </div>
+    } @else if (filteredEquipes().length === 0) {
       <div class="empty">
         <div class="empty-icon">👥</div>
-        <p>Aucune équipe enregistrée</p>
+        <h3>Aucune équipe trouvée</h3>
+        <p>{{ searchTerm() ? 'Aucun résultat ne correspond à votre recherche.' : 'Commencez par ajouter une nouvelle équipe.' }}</p>
       </div>
     } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Nom</th>
-            <th>Spécialité</th>
-            <th>Entreprise</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (e of equipes(); track e.id) {
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td><span class="badge">{{ e.id }}</span></td>
-              <td><strong>{{ e.nom }}</strong></td>
-              <td><span class="chip">{{ e.specialite }}</span></td>
-              <td>{{ e.entreprise ? e.entreprise.nom ?? '—' : '—' }}</td>
-              <td>
-                <div class="actions">
-                  <button class="btn btn-secondary btn-sm" (click)="edit(e)">✏️ Modifier</button>
-                  <button class="btn btn-danger btn-sm" (click)="delete(e.id!)">🗑️ Supprimer</button>
-                </div>
-              </td>
+              <th style="width: 80px">ID</th>
+              <th>Nom de l'équipe</th>
+              <th>Spécialité</th>
+              <th>Entreprise affiliée</th>
+              <th style="width: 190px; text-align: right">Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (e of filteredEquipes(); track e.id) {
+              <tr>
+                <td><span class="badge">#{{ e.id }}</span></td>
+                <td><strong>{{ e.nom }}</strong></td>
+                <td><span class="chip">{{ e.specialite }}</span></td>
+                <td>
+                  @if (e.entreprise) {
+                    <span>🏢 {{ e.entreprise.nom }}</span>
+                  } @else {
+                    <span style="color: var(--text-muted)">Non affiliée</span>
+                  }
+                </td>
+                <td style="text-align: right">
+                  <div class="actions" style="justify-content: flex-end">
+                    <button class="btn btn-secondary btn-sm" (click)="edit(e)" title="Modifier les informations">
+                      ✏️ Modifier
+                    </button>
+                    <button class="btn btn-danger btn-sm" (click)="delete(e.id, e.nom)" title="Supprimer définitivement">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="currentPage()"
+        [totalPages]="totalPages()"
+        [totalElements]="totalElements()"
+        [pageSize]="pageSize()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
     }
   </div>
 </div>

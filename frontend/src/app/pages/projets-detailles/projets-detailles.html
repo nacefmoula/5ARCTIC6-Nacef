@@ -1,85 +1,223 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">📋 Projets Détaillés</h1>
-      <p class="page-subtitle">Gérer les détails techniques et financiers des projets</p>
+      <h1 class="page-title">📋 Spécifications & Projets Détaillés</h1>
+      <p class="page-subtitle">Gestion des détails techniques, budgets et plannings des projets</p>
     </div>
-    <button class="btn btn-primary" (click)="openAdd()">+ Ajouter</button>
+    <button class="btn btn-primary" (click)="openAdd()">
+      <span>+ Nouveau Détail Projet</span>
+    </button>
   </div>
 
+  <!-- Cartes récapitulatives / Dashboard metrics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalElements() }}</span>
+        <span class="stat-label">Spécifications techniques</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📁</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ projets().length }}</span>
+        <span class="stat-label">Projets disponibles</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📑</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalPages() }}</span>
+        <span class="stat-label">Pages de fiches projets</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de saisie avec gestion RFC 7807 -->
   @if (showForm()) {
     <div class="form-card">
-      <h3 class="form-title">{{ editMode() ? 'Modifier' : 'Nouveau' }} Projet Détaillé</h3>
+      <div class="form-header">
+        <h3 class="form-title">{{ editMode() ? '✏️ Modifier' : '✨ Nouvelle' }} Fiche Projet Détaillé</h3>
+        <span class="chip">{{ editMode() ? 'ID #' + current().id : 'Mode Création' }}</span>
+      </div>
+
       <div class="form-grid">
-        <div class="form-group" style="grid-column: 1 / -1">
-          <label>Description</label>
-          <input type="text" [value]="current().description" (input)="update('description', $any($event.target).value)" placeholder="Description du projet" />
+        <div class="form-group" style="grid-column: 1 / -1" [class.has-error]="fieldErrors()['description']">
+          <label for="pdDescInput">Description fonctionnelle & technique <span class="required-star">*</span></label>
+          <input
+            id="pdDescInput"
+            type="text"
+            [class.input-error]="fieldErrors()['description']"
+            [value]="current().description"
+            (input)="updateStringField('description', $event)"
+            placeholder="Ex: Mise en place de la pipeline DevSecOps et conteneurisation Docker..."
+          />
+          @if (fieldErrors()['description']) {
+            <span class="field-error">⚠ {{ fieldErrors()['description'] }}</span>
+          }
         </div>
-        <div class="form-group">
-          <label>Technologie</label>
-          <input type="text" [value]="current().technologie" (input)="update('technologie', $any($event.target).value)" placeholder="Ex: Java, Docker, K8s..." />
+
+        <div class="form-group" [class.has-error]="fieldErrors()['technologie']">
+          <label for="pdTechInput">Technologies employées <span class="required-star">*</span></label>
+          <input
+            id="pdTechInput"
+            type="text"
+            [class.input-error]="fieldErrors()['technologie']"
+            [value]="current().technologie"
+            (input)="updateStringField('technologie', $event)"
+            placeholder="Ex: Angular 22, Spring Boot 4, Docker, K8s..."
+          />
+          @if (fieldErrors()['technologie']) {
+            <span class="field-error">⚠ {{ fieldErrors()['technologie'] }}</span>
+          }
         </div>
-        <div class="form-group">
-          <label>Coût Provisoire (DT)</label>
-          <input type="number" [value]="current().coutProvisoire" (input)="update('coutProvisoire', +$any($event.target).value)" placeholder="0.00" />
+
+        <div class="form-group" [class.has-error]="fieldErrors()['coutProvisoire']">
+          <label for="pdCoutInput">Coût Provisoire (TND) <span class="required-star">*</span></label>
+          <input
+            id="pdCoutInput"
+            type="number"
+            min="0"
+            step="100"
+            [class.input-error]="fieldErrors()['coutProvisoire']"
+            [value]="current().coutProvisoire"
+            (input)="updateNumberField('coutProvisoire', $event)"
+            placeholder="0.00"
+          />
+          @if (fieldErrors()['coutProvisoire']) {
+            <span class="field-error">⚠ {{ fieldErrors()['coutProvisoire'] }}</span>
+          }
         </div>
-        <div class="form-group">
-          <label>Date de début</label>
-          <input type="date" [value]="current().dateDebut" (input)="update('dateDebut', $any($event.target).value)" />
+
+        <div class="form-group" [class.has-error]="fieldErrors()['dateDebut']">
+          <label for="pdDateInput">Date de démarrage prévisionnelle <span class="required-star">*</span></label>
+          <input
+            id="pdDateInput"
+            type="date"
+            [class.input-error]="fieldErrors()['dateDebut']"
+            [value]="current().dateDebut"
+            (input)="updateStringField('dateDebut', $event)"
+          />
+          @if (fieldErrors()['dateDebut']) {
+            <span class="field-error">⚠ {{ fieldErrors()['dateDebut'] }}</span>
+          }
         </div>
+
         <div class="form-group">
-          <label>Projet</label>
-          <select [value]="selectedProjetId() ?? ''" (change)="selectedProjetId.set($any($event.target).value ? +$any($event.target).value : null)">
-            <option value="">-- Sélectionner un projet --</option>
+          <label for="pdProjetSelect">Projet parent associé</label>
+          <select
+            id="pdProjetSelect"
+            [value]="selectedProjetId() ?? ''"
+            (change)="onProjetSelect($event)"
+          >
+            <option value="">-- Aucun projet rattaché --</option>
             @for (p of projets(); track p.id) {
-              <option [value]="p.id">{{ p.sujet }}</option>
+              <option [value]="p.id">{{ p.sujet }} (ID #{{ p.id }})</option>
             }
           </select>
         </div>
       </div>
+
       <div class="form-actions">
-        <button class="btn btn-primary" (click)="save()">{{ editMode() ? 'Mettre à jour' : 'Enregistrer' }}</button>
-        <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner spinner-sm"></span>
+            <span>Enregistrement...</span>
+          } @else {
+            <span>{{ editMode() ? 'Mettre à jour' : 'Enregistrer la fiche' }}</span>
+          }
+        </button>
+        <button class="btn btn-secondary" (click)="cancel()" [disabled]="saving()">
+          Annuler
+        </button>
       </div>
     </div>
   }
 
+  <!-- Barre d'outils et recherche -->
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher par description, technologie ou projet..."
+        [value]="searchTerm()"
+        (input)="onSearch($event)"
+      />
+    </div>
+    <button class="btn btn-secondary btn-sm" (click)="load()" title="Actualiser la liste">
+      🔄 Actualiser
+    </button>
+  </div>
+
+  <!-- Tableau des données -->
   <div class="card">
-    @if (projetsDetailles().length === 0) {
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Chargement des fiches de projets...</p>
+      </div>
+    } @else if (filteredProjetsDetailles().length === 0) {
       <div class="empty">
         <div class="empty-icon">📋</div>
-        <p>Aucun projet détaillé enregistré</p>
+        <h3>Aucune spécification de projet trouvée</h3>
+        <p>{{ searchTerm() ? 'Aucun résultat ne correspond à votre recherche.' : 'Commencez par ajouter une nouvelle fiche technique.' }}</p>
       </div>
     } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Description</th>
-            <th>Technologie</th>
-            <th>Coût (DT)</th>
-            <th>Date début</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (pd of projetsDetailles(); track pd.id) {
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td><span class="badge">{{ pd.id }}</span></td>
-              <td>{{ pd.description }}</td>
-              <td><span class="chip">{{ pd.technologie }}</span></td>
-              <td><strong>{{ pd.coutProvisoire | number }} DT</strong></td>
-              <td>{{ pd.dateDebut }}</td>
-              <td>
-                <div class="actions">
-                  <button class="btn btn-secondary btn-sm" (click)="edit(pd)">✏️ Modifier</button>
-                  <button class="btn btn-danger btn-sm" (click)="delete(pd.id!)">🗑️ Supprimer</button>
-                </div>
-              </td>
+              <th style="width: 70px">ID</th>
+              <th>Description</th>
+              <th>Technologie</th>
+              <th>Coût Provisoire</th>
+              <th>Date Début</th>
+              <th>Projet Associé</th>
+              <th style="width: 190px; text-align: right">Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (pd of filteredProjetsDetailles(); track pd.id) {
+              <tr>
+                <td><span class="badge">#{{ pd.id }}</span></td>
+                <td>{{ pd.description }}</td>
+                <td><span class="chip">{{ pd.technologie }}</span></td>
+                <td><strong>{{ pd.coutProvisoire | number:'1.2-2' }} TND</strong></td>
+                <td>{{ pd.dateDebut }}</td>
+                <td>
+                  @if (pd.projet) {
+                    <span>📁 {{ pd.projet.sujet }}</span>
+                  } @else {
+                    <span style="color: var(--text-muted)">—</span>
+                  }
+                </td>
+                <td style="text-align: right">
+                  <div class="actions" style="justify-content: flex-end">
+                    <button class="btn btn-secondary btn-sm" (click)="edit(pd)" title="Modifier la fiche">
+                      ✏️ Modifier
+                    </button>
+                    <button class="btn btn-danger btn-sm" (click)="delete(pd.id)" title="Supprimer définitivement">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="currentPage()"
+        [totalPages]="totalPages()"
+        [totalElements]="totalElements()"
+        [pageSize]="pageSize()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
     }
   </div>
 </div>

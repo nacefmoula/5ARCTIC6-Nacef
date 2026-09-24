@@ -25,5 +25,6 @@ public class Equipe {
 
     @JsonIgnore
     @ManyToMany
+    @Builder.Default
     private List<Projet> projets = new ArrayList<>();
 }

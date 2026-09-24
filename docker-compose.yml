@@ -14,7 +14,9 @@ services:
     ports:
       - "8081:8080"
     networks:
-      - devops-network
+      devops-network:
+        aliases:
+          - backend-service
 
   frontend:
     build:

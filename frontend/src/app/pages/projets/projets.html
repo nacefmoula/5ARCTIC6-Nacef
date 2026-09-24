@@ -1,58 +1,149 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">📁 Projets</h1>
-      <p class="page-subtitle">Gérer les projets de l'organisation</p>
+      <h1 class="page-title">📁 Projets de l'Organisation</h1>
+      <p class="page-subtitle">Suivi du portefeuille de projets et alignement stratégique</p>
     </div>
-    <button class="btn btn-primary" (click)="openAdd()">+ Ajouter</button>
+    <button class="btn btn-primary" (click)="openAdd()">
+      <span>+ Nouveau Projet</span>
+    </button>
   </div>
 
+  <!-- Cartes récapitulatives / Dashboard metrics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📁</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalElements() }}</span>
+        <span class="stat-label">Projets répertoriés</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📄</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalPages() }}</span>
+        <span class="stat-label">Pages de projets</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🚀</div>
+      <div class="stat-info">
+        <span class="stat-value">Spring Boot 4</span>
+        <span class="stat-label">Backend REST paginé</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de saisie avec gestion RFC 7807 -->
   @if (showForm()) {
     <div class="form-card">
-      <h3 class="form-title">{{ editMode() ? 'Modifier' : 'Nouveau' }} Projet</h3>
+      <div class="form-header">
+        <h3 class="form-title">{{ editMode() ? '✏️ Modifier' : '✨ Nouveau' }} Projet</h3>
+        <span class="chip">{{ editMode() ? 'ID #' + current().id : 'Mode Création' }}</span>
+      </div>
+
       <div class="form-grid">
-        <div class="form-group" style="grid-column: 1 / -1">
-          <label>Sujet</label>
-          <input type="text" [value]="current().sujet" (input)="update('sujet', $any($event.target).value)" placeholder="Sujet du projet" />
+        <div class="form-group" style="grid-column: 1 / -1" [class.has-error]="fieldErrors()['sujet']">
+          <label for="projetSujetInput">Sujet / Intitulé du projet <span class="required-star">*</span></label>
+          <input
+            id="projetSujetInput"
+            type="text"
+            [class.input-error]="fieldErrors()['sujet']"
+            [value]="current().sujet"
+            (input)="updateField('sujet', $event)"
+            placeholder="Ex: Migration Kubernetes & CI/CD GitOps..."
+          />
+          @if (fieldErrors()['sujet']) {
+            <span class="field-error">⚠ {{ fieldErrors()['sujet'] }}</span>
+          }
         </div>
       </div>
+
       <div class="form-actions">
-        <button class="btn btn-primary" (click)="save()">{{ editMode() ? 'Mettre à jour' : 'Enregistrer' }}</button>
-        <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner spinner-sm"></span>
+            <span>Enregistrement...</span>
+          } @else {
+            <span>{{ editMode() ? 'Mettre à jour' : 'Enregistrer le projet' }}</span>
+          }
+        </button>
+        <button class="btn btn-secondary" (click)="cancel()" [disabled]="saving()">
+          Annuler
+        </button>
       </div>
     </div>
   }
 
+  <!-- Barre d'outils et recherche -->
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher par sujet ou identifiant..."
+        [value]="searchTerm()"
+        (input)="onSearch($event)"
+      />
+    </div>
+    <button class="btn btn-secondary btn-sm" (click)="load()" title="Actualiser la liste">
+      🔄 Actualiser
+    </button>
+  </div>
+
+  <!-- Tableau des données -->
   <div class="card">
-    @if (projets().length === 0) {
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Chargement des projets...</p>
+      </div>
+    } @else if (filteredProjets().length === 0) {
       <div class="empty">
         <div class="empty-icon">📁</div>
-        <p>Aucun projet enregistré</p>
+        <h3>Aucun projet trouvé</h3>
+        <p>{{ searchTerm() ? 'Aucun résultat ne correspond à votre recherche.' : 'Commencez par ajouter un nouveau projet.' }}</p>
       </div>
     } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Sujet</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of projets(); track p.id) {
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td><span class="badge">{{ p.id }}</span></td>
-              <td><strong>{{ p.sujet }}</strong></td>
-              <td>
-                <div class="actions">
-                  <button class="btn btn-secondary btn-sm" (click)="edit(p)">✏️ Modifier</button>
-                  <button class="btn btn-danger btn-sm" (click)="delete(p.id!)">🗑️ Supprimer</button>
-                </div>
-              </td>
+              <th style="width: 80px">ID</th>
+              <th>Sujet du projet</th>
+              <th style="width: 190px; text-align: right">Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (p of filteredProjets(); track p.id) {
+              <tr>
+                <td><span class="badge">#{{ p.id }}</span></td>
+                <td><strong>{{ p.sujet }}</strong></td>
+                <td style="text-align: right">
+                  <div class="actions" style="justify-content: flex-end">
+                    <button class="btn btn-secondary btn-sm" (click)="edit(p)" title="Modifier les informations">
+                      ✏️ Modifier
+                    </button>
+                    <button class="btn btn-danger btn-sm" (click)="delete(p.id, p.sujet)" title="Supprimer définitivement">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="currentPage()"
+        [totalPages]="totalPages()"
+        [totalElements]="totalElements()"
+        [pageSize]="pageSize()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
     }
   </div>
 </div>

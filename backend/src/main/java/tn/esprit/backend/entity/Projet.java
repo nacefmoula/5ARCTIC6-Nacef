@@ -20,9 +20,11 @@ public class Projet {
 
     @JsonIgnore
     @ManyToMany(mappedBy = "projets")
+    @Builder.Default
     private List<Equipe> equipes = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY)
+    @Builder.Default
     private List<ProjetDetaille> projetsDetailles = new ArrayList<>();
 }

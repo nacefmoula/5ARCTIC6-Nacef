@@ -1,18 +1,49 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Equipe } from '../models/equipe.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { EquipeRequestDTO, EquipeResponseDTO } from '../models/equipe.model';
+import { Page } from '../models/api-response.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class EquipeService {
   private http = inject(HttpClient);
-  private api = 'http://localhost:8080/equipe';
+  private api = `${environment.apiUrl}/equipe`;
 
-  getAll()              { return this.http.get<Equipe[]>(`${this.api}/all`); }
-  getById(id: number)   { return this.http.get<Equipe>(`${this.api}/get/${id}`); }
-  add(e: Equipe)        { return this.http.post<Equipe>(`${this.api}/add`, e); }
-  update(e: Equipe)     { return this.http.put<Equipe>(`${this.api}/update`, e); }
-  delete(id: number)    { return this.http.delete<void>(`${this.api}/delete/${id}`); }
-  assignToEntreprise(equipeId: number, entrepriseId: number) {
-    return this.http.put<Equipe>(`${this.api}/assign-entreprise/${equipeId}/${entrepriseId}`, {});
+  getAll(): Observable<EquipeResponseDTO[]> {
+    return this.http.get<EquipeResponseDTO[]>(`${this.api}/all`);
+  }
+
+  getPage(page = 0, size = 10): Observable<Page<EquipeResponseDTO>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<EquipeResponseDTO>>(`${this.api}/page`, { params });
+  }
+
+  getById(id: number): Observable<EquipeResponseDTO> {
+    return this.http.get<EquipeResponseDTO>(`${this.api}/get/${id}`);
+  }
+
+  getByEntreprise(entrepriseId: number): Observable<EquipeResponseDTO[]> {
+    return this.http.get<EquipeResponseDTO[]>(`${this.api}/by-entreprise/${entrepriseId}`);
+  }
+
+  add(e: EquipeRequestDTO): Observable<EquipeResponseDTO> {
+    return this.http.post<EquipeResponseDTO>(`${this.api}/add`, e);
+  }
+
+  update(e: EquipeRequestDTO): Observable<EquipeResponseDTO> {
+    return this.http.put<EquipeResponseDTO>(`${this.api}/update`, e);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/delete/${id}`);
+  }
+
+  assignToEntreprise(equipeId: number, entrepriseId: number): Observable<EquipeResponseDTO> {
+    return this.http.put<EquipeResponseDTO>(`${this.api}/assign-entreprise/${equipeId}/${entrepriseId}`, {});
+  }
+
+  assignToProjet(equipeId: number, projetId: number): Observable<EquipeResponseDTO> {
+    return this.http.put<EquipeResponseDTO>(`${this.api}/assign-projet/${equipeId}/${projetId}`, {});
   }
 }

@@ -19,15 +19,27 @@ pipeline {
             }
         }
 
-        stage('2. Build & Test Backend') {
+        stage('2. Test & Package Backend') {
             steps {
                 dir('backend') {
-                    sh 'mvn clean package -DskipTests'
+                    echo "=== Exécution des tests unitaires avec base H2 & JaCoCo ==="
+                    sh 'mvn clean test'
+                    echo "=== Packaging du livrable JAR ==="
+                    sh 'mvn package -DskipTests'
                 }
             }
         }
 
-        stage('3. Analyse SonarQube') {
+        stage('3. Test Frontend') {
+            steps {
+                dir('frontend') {
+                    echo "=== Exécution des tests unitaires Frontend (Vitest) ==="
+                    sh 'npm test -- --watch=false'
+                }
+            }
+        }
+
+        stage('4. Analyse SonarQube') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     dir('backend') {
@@ -36,14 +48,15 @@ pipeline {
                               -Dsonar.host.url=http://localhost:9000 \
                               -Dsonar.token=${SONAR_TOKEN} \
                               -Dsonar.projectKey=DevOps-AppGestionDesProjets-Backend \
-                              -Dsonar.projectName="DevOps App Gestion Projets Backend"
+                              -Dsonar.projectName="DevOps App Gestion Projets Backend" \
+                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                         '''
                     }
                 }
             }
         }
         
-        stage('4. Docker Build & Push') {
+        stage('5. Docker Build & Push') {
             steps {
                 script {
                     withCredentials([usernamePassword(
@@ -69,16 +82,19 @@ pipeline {
             }
         }
 
-        stage('5. Deploy to Kubernetes') {
+        stage('6. Deploy to Kubernetes') {
             steps {
-                echo "=== Déploiement et redémarrage des PODs Kubernetes ==="
-                // Redémarre les pods pour télécharger la dernière image :latest
+                echo "=== Application des manifestes et redémarrage des PODs Kubernetes ==="
+                sh 'kubectl apply -f k8s/secret.yaml'
+                sh 'kubectl apply -f k8s/mysql.yaml'
+                sh 'kubectl apply -f k8s/backend.yaml'
+                sh 'kubectl apply -f k8s/frontend.yaml'
                 sh 'kubectl rollout restart deployment/backend'
                 sh 'kubectl rollout restart deployment/frontend'
                 
                 // Attend que les nouveaux pods soient prêts avant de valider le stage
-                sh 'kubectl rollout status deployment/backend --timeout=60s'
-                sh 'kubectl rollout status deployment/frontend --timeout=60s'
+                sh 'kubectl rollout status deployment/backend --timeout=90s'
+                sh 'kubectl rollout status deployment/frontend --timeout=90s'
             }
         }
     } // <-- Fermeture obligatoire du bloc stages
