@@ -33,6 +33,8 @@ pipeline {
         stage('3. Test Frontend') {
             steps {
                 dir('frontend') {
+                    echo "=== Installation des dépendances Frontend ==="
+                    sh 'npm install'
                     echo "=== Exécution des tests unitaires Frontend (Vitest) ==="
                     sh 'npm test -- --watch=false'
                 }
