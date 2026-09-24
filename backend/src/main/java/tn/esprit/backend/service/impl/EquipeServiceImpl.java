@@ -21,6 +21,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class EquipeServiceImpl implements IEquipeService {
 
+    private static final String RESOURCE_NAME = "Equipe";
+
     private final EquipeRepository equipeRepository;
     private final EntrepriseRepository entrepriseRepository;
     private final ProjetRepository projetRepository;
@@ -46,7 +48,7 @@ public class EquipeServiceImpl implements IEquipeService {
     @Override
     public Equipe getEquipeById(Long id) {
         return equipeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipe", id));
+                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, id));
     }
 
     @Override
@@ -68,7 +70,7 @@ public class EquipeServiceImpl implements IEquipeService {
     @Transactional
     public Equipe assignEquipeToEntreprise(Long equipeId, Long entrepriseId) {
         Equipe equipe = equipeRepository.findById(equipeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipe", equipeId));
+                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, equipeId));
         Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Entreprise", entrepriseId));
         equipe.setEntreprise(entreprise);
@@ -79,7 +81,7 @@ public class EquipeServiceImpl implements IEquipeService {
     @Transactional
     public Equipe assignEquipeToProjet(Long equipeId, Long projetId) {
         Equipe equipe = equipeRepository.findById(equipeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipe", equipeId));
+                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, equipeId));
         Projet projet = projetRepository.findById(projetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Projet", projetId));
         equipe.getProjets().add(projet);

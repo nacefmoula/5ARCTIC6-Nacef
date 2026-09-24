@@ -33,8 +33,7 @@ public final class EntityMapper {
     public static Equipe toEntity(EquipeRequestDTO dto) {
         if (dto == null) return null;
         Entreprise entreprise = null;
-        Long entId = dto.entrepriseId() != null ? dto.entrepriseId() :
-                     (dto.entreprise() != null ? dto.entreprise().id() : null);
+        Long entId = extractEntrepriseId(dto);
         if (entId != null) {
             entreprise = Entreprise.builder().id(entId).build();
         }
@@ -77,8 +76,7 @@ public final class EntityMapper {
     public static ProjetDetaille toEntity(ProjetDetailleRequestDTO dto) {
         if (dto == null) return null;
         Projet projet = null;
-        Long pId = dto.projetId() != null ? dto.projetId() :
-                   (dto.projet() != null ? dto.projet().id() : null);
+        Long pId = extractProjetId(dto);
         if (pId != null) {
             projet = Projet.builder().id(pId).build();
         }
@@ -102,5 +100,26 @@ public final class EntityMapper {
                 entity.getDateDebut(),
                 toResponse(entity.getProjet())
         );
+    }
+
+    // ==================== Méthodes utilitaires ====================
+    private static Long extractEntrepriseId(EquipeRequestDTO dto) {
+        if (dto.entrepriseId() != null) {
+            return dto.entrepriseId();
+        }
+        if (dto.entreprise() != null) {
+            return dto.entreprise().id();
+        }
+        return null;
+    }
+
+    private static Long extractProjetId(ProjetDetailleRequestDTO dto) {
+        if (dto.projetId() != null) {
+            return dto.projetId();
+        }
+        if (dto.projet() != null) {
+            return dto.projet().id();
+        }
+        return null;
     }
 }

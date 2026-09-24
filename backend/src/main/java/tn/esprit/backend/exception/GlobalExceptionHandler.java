@@ -15,12 +15,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String TIMESTAMP_PROPERTY = "timestamp";
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFoundException(ResourceNotFoundException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problemDetail.setTitle("Ressource Introuvable");
         problemDetail.setType(URI.create("https://api.gestionprojets.tn/errors/not-found"));
-        problemDetail.setProperty("timestamp", Instant.now());
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
         return problemDetail;
     }
 
@@ -32,7 +34,7 @@ public class GlobalExceptionHandler {
         );
         problemDetail.setTitle("Erreur de Validation");
         problemDetail.setType(URI.create("https://api.gestionprojets.tn/errors/validation"));
-        problemDetail.setProperty("timestamp", Instant.now());
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
 
         Map<String, String> errors = new HashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
@@ -47,7 +49,7 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         problemDetail.setTitle("Requête Invalide");
         problemDetail.setType(URI.create("https://api.gestionprojets.tn/errors/bad-request"));
-        problemDetail.setProperty("timestamp", Instant.now());
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
         return problemDetail;
     }
 
@@ -59,7 +61,7 @@ public class GlobalExceptionHandler {
         );
         problemDetail.setTitle("Erreur Interne du Serveur");
         problemDetail.setType(URI.create("https://api.gestionprojets.tn/errors/internal-server-error"));
-        problemDetail.setProperty("timestamp", Instant.now());
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
         return problemDetail;
     }
 }
